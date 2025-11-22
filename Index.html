@@ -1,0 +1,540 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AutomateFlow: Savings Architect</title>
+    <style>
+        /* --- Vanilla CSS for Speed and Reliability --- */
+        :root {
+            --primary: #4f46e5; --primary-dark: #4338ca; --bg: #f3f4f6;
+            --surface: #ffffff; --text: #111827; --border: #e5e7eb;
+            --success: #10b981; --purple: #7c3aed; --purple-light: #f5f3ff;
+            --stat-green: #059669; --stat-blue: #1d4ed8;
+            --warning-bg: #fffbe6; /* Light yellow for CTA */
+            --warning-border: #fcd34d; /* Yellow border for CTA */
+        }
+        body { font-family: system-ui, -apple-system, sans-serif; background: var(--bg); color: var(--text); margin: 0; padding-bottom: 60px; }
+        
+        /* Layout */
+        .header { background: #111827; color: white; padding: 40px 20px 80px; text-align: center; }
+        .header h1 { margin: 0; font-size: 1.8rem; }
+        .container { max-width: 900px; margin: -50px auto 0; padding: 0 20px; }
+        
+        /* Components */
+        .card { background: var(--surface); border-radius: 12px; padding: 24px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); margin-bottom: 20px; }
+        .btn { width: 100%; padding: 12px; border: 1px solid var(--border); background: white; border-radius: 8px; cursor: pointer; text-align: left; margin-bottom: 8px; transition: 0.2s; display: flex; align-items: center; gap: 10px; }
+        .btn:hover { background: #f9fafb; }
+        .btn.active { background: #e0e7ff; border-color: var(--primary); color: var(--primary-dark); font-weight: 600; }
+        /* NOTE: Default btn-primary is blue, overridden to red below */
+        .btn-primary { background: var(--primary); color: white; text-align: center; justify-content: center; font-weight: bold; font-size: 1.1rem; padding: 16px; border: none; text-decoration: none; display: block; }
+        .btn-primary:disabled { background: #9ca3af; cursor: not-allowed; opacity: 0.7; }
+
+        /* Tabs */
+        .tabs { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 20px; }
+        .tab { padding: 15px; background: rgba(31,41,55,0.8); color: #ccc; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; }
+        .tab.active { background: white; color: var(--primary); box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
+
+        /* Grids */
+        .grid-2 { display: grid; grid-template-columns: 1fr; gap: 20px; }
+        .grid-3 { display: grid; grid-template-columns: 1fr; gap: 20px; }
+        .sw-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 10px; }
+        @media(min-width: 768px) { .grid-2 { grid-template-columns: 1fr 1fr; } .grid-3 { grid-template-columns: 1fr 1fr 1fr; } }
+
+        /* Stats & Recipes */
+        .stat-card { padding: 20px; border-radius: 12px; color: white; text-align: center; }
+        .stat-num { font-size: 2.5rem; font-weight: 800; margin: 5px 0; }
+        .recipe { border-left: 4px solid var(--primary); margin-bottom: 15px; transition: 0.2s; }
+        .recipe.bundle { border-left-color: var(--purple); background: var(--purple-light); }
+        .recipe:hover { transform: translateY(-2px); box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1); }
+        .badge { padding: 2px 8px; border-radius: 12px; font-size: 0.75rem; font-weight: bold; background: #eee; }
+        
+        /* UPDATED: Priority (which uses .badge.high) is now RED */
+        .badge.high { background: #fee2e2; color: #b91c1c; } 
+        
+        .step { display: flex; align-items: center; gap: 10px; margin: 8px 0; font-size: 0.9rem; }
+        .step-num { background: #ede9fe; color: var(--purple); width: 24px; height: 24px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold; flex-shrink: 0; }
+        
+        input, select { width: 100%; padding: 10px; border-radius: 8px; border: 1px solid var(--border); margin-top: 5px; box-sizing: border-box; }
+
+        /* CTA Specific Styling */
+        .cta-card { background: var(--warning-bg); border: 2px solid var(--warning-border); margin-top: 30px; }
+        .cta-highlight { font-size: 1.8rem; font-weight: bold; margin: 15px 0; color: var(--primary); }
+    </style>
+</head>
+<body>
+
+<div class="header">
+    <h1>AutomateFlow</h1>
+    <p style="color:#9ca3af">SaaS Blueprint & Savings Calculator for Service Professionals</p>
+</div>
+
+<div class="container" id="app">
+    <!-- Content injected by JS -->
+</div>
+
+<script>
+    // --- 1. DATA ---
+    const OCCUPATIONS = [
+        // Sorted Alphabetically by label
+        {id:'accountant', label:'Accountant/Bookkeeper'},
+        {id:'appliance', label:'Appliance Repair'},
+        {id:'architect', label:'Architect/Engineer'},
+        {id:'consultant', label:'Business Consultant'},
+        {id:'chiropractor', label:'Chiropractor/Physio'},
+        {id:'cleaner', label:'Cleaning Service'},
+        {id:'construction', label:'General Contractor'},
+        {id:'dentist', label:'Dentist/Orthodontist'},
+        {id:'electrician', label:'Electrician'},
+        {id:'fence', label:'Fencing'},
+        {id:'flooring', label:'Flooring'},
+        {id:'garage', label:'Garage Door'},
+        {id:'handyman', label:'Handyman'},
+        {id:'hvac', label:'HVAC Tech'},
+        {id:'insurance', label:'Insurance Broker'},
+        {id:'landscaper', label:'Landscaper'},
+        {id:'lawyer', label:'Legal Services/Lawyer'},
+        {id:'locksmith', label:'Locksmith'},
+        {id:'marketing', label:'Marketing Agency'},
+        {id:'mover', label:'Movers'},
+        {id:'painter', label:'Painter'},
+        {id:'pest', label:'Pest Control'},
+        {id:'plumber', label:'Plumber'},
+        {id:'pool', label:'Pool Service'},
+        {id:'real_estate', label:'Real Estate Agent'},
+        {id:'restaurant', label:'Restaurant'}, 
+        {id:'roofer', label:'Roofer'},
+        {id:'solar', label:'Solar'},
+        {id:'tree', label:'Tree Service'},
+        {id:'vet', label:'Veterinarian'},
+        {id:'window', label:'Window Cleaner'}
+    ];
+
+    const CURRENCIES = [
+        {code:'USD', sym:'$', label:'USD ($)'},
+        {code:'CAD', sym:'C$', label:'CAD (C$)'},
+        {code:'EUR', sym:'€', label:'EUR (€)'},
+        {code:'GBP', sym:'£', label:'GBP (£)'}
+    ];
+
+    const SOFTWARE = [
+        // Sorted alphabetically by name
+        {id:'auto_sms', name:'Automated SMS (Twilio)', cat:'Comms', for:['all']},
+        {id:'clio', name:'Clio Manage', cat:'CRM', for:['lawyer']},
+        {id:'phone_call', name:'Direct Phone Calls', cat:'Comms', for:['all']},
+        {id:'fb', name:'Facebook Ads', cat:'Mktg', for:['all']},
+        {id:'gsuite', name:'G Suite/Office 365', cat:'Comms', for:['all']},
+        {id:'gmail', name:'Gmail', cat:'Comms', for:['all']},
+        {id:'hcp', name:'Housecall Pro', cat:'CRM', for:['plumber','hvac','electrician','cleaner','window','handyman']},
+        {id:'hub', name:'HubSpot', cat:'CRM', for:['marketing','consultant','real_estate']},
+        {id:'jobber', name:'Jobber', cat:'CRM', for:['landscaper','cleaner','pest','pool','tree','window']},
+        {id:'jn', name:'JobNimbus', cat:'CRM', for:['roofer','construction','solar','fence']},
+        {id:'manual_sms', name:'Manual SMS', cat:'Comms', for:['all']},
+        {id:'monday', name:'Monday.com', cat:'CRM', for:['all']},
+        {id:'man', name:'Paper/Spreadsheet', cat:'CRM', for:['all']},
+        {id:'pc', name:'Procore', cat:'CRM', for:['construction','flooring']},
+        {id:'qbo', name:'QuickBooks', cat:'Acct', for:['all']},
+        {id:'resy', name:'Resy/Toast/POS', cat:'CRM', for:['restaurant']},
+        {id:'sales_c', name:'Sales Cloud', cat:'CRM', for:['all']},
+        {id:'sf', name:'Salesforce', cat:'CRM', for:['real_estate','insurance','consultant','marketing','architect']},
+        {id:'st', name:'ServiceTitan', cat:'CRM', for:['plumber','hvac','electrician','garage']},
+        {id:'slack', name:'Slack', cat:'Comms', for:['all']},
+        {id:'web', name:'Website Form', cat:'Mktg', for:['all']},
+        {id:'wk', name:'Workiz', cat:'CRM', for:['locksmith','garage','appliance','mover']},
+        {id:'xero', name:'Xero', cat:'Acct', for:['all']}
+    ];
+
+    const RECIPES = [
+        // Trades/FSM
+        {id:'bundle1', type:'Bundle', title:'Lead-to-Booked System', desc:'Instant text response + Office Alert + CRM Entry.', steps:['Form Submit','SMS Client','Alert Office','Create Lead'], apps:['web','auto_sms','slack','st','hcp','jobber','wk','jn'], mins:25, imp:'Priority'},
+        {id:'bundle2', type:'Bundle', title:'Cash & Reputation Loop', desc:'Job Done -> Invoice -> Wait for Pay -> Ask for Review.', steps:['Job Done','Invoice','Payment','Review Email'], apps:['st','hcp','jobber','qbo','xero','gmail'], mins:35, imp:'Priority'},
+        {id:'single2', type:'Single', title:'Invoice Sync', desc:'Push finished jobs to accounting.', apps:['st','hcp','jobber','wk','pc','qbo','xero'], mins:20, imp:'Priority', trigger:'Job Done', action:'Create Invoice'},
+        {id:'single3', type:'Single', title:'Reservation Confirmation & Reminder', desc:'Automatic SMS/Email for reservation confirmation and day-of reminders.', apps:['resy', 'auto_sms', 'gmail'], mins:5, imp:'Priority', trigger:'New Reservation', action:'Send Confirmation/Reminder'},
+        // General Service/Professional
+        {id:'bundle3', type:'Bundle', title:'Client Onboarding & Document Flow', desc:'Intake Form -> Contract/Retainer Gen -> Auto-Scheduling.', steps:['Intake Form','Document Gen','Auto-Schedule','Send Welcome'], apps:['sf','hub','monday','clio','gsuite'], mins:30, imp:'Priority'},
+        {id:'single4', type:'Single', title:'Proposal/Quote Generation', desc:'Automate proposal draft based on sales stage.', apps:['sf','hub','monday','sales_c'], mins:15, imp:'High', trigger:'Opportunity Stage: Qualified', action:'Generate Proposal Draft'},
+        {id:'single1', type:'Single', title:'Instant Auto-Responder', desc:'Text new leads immediately.', apps:['web','auto_sms','fb'], mins:5, imp:'High', trigger:'New Lead', action:'Send SMS'}
+    ];
+
+    // --- 2. STATE ---
+    let state = {
+        tab: 'setup',
+        occ: 'plumber',
+        curr: 'USD',
+        jobs: 20,
+        rate: 25,
+        apps: [],
+        searchQuery: '' // New state for search bar
+    };
+
+    // --- PPP ADJUSTMENT LOGIC ---
+    function getPppAdjustedFee(currencyCode) {
+        // High PPP markets (standard fee)
+        if (currencyCode === 'USD' || currencyCode === 'GBP') {
+            return { percentage: 0.15, text: "standard (15%)" };
+        }
+        // Mid-range PPP markets (reduced fee)
+        if (currencyCode === 'CAD' || currencyCode === 'EUR') {
+            return { percentage: 0.13, text: "PPP-adjusted (13%)" };
+        }
+        // Default (safety net)
+        return { percentage: 0.15, text: "standard (15%)" };
+    }
+
+
+    // --- 3. RENDER FUNCTIONS ---
+    const appDiv = document.getElementById('app');
+
+    // Function to rebuild only the occupation dropdown options
+    function updateOccupationSelect() {
+        const selectElement = document.getElementById('occupationSelect');
+        if (!selectElement) return;
+
+        const filteredOCC = OCCUPATIONS.filter(o => 
+            o.label.toLowerCase().includes(state.searchQuery.toLowerCase())
+        );
+
+        const optionsHtml = 
+            `<option value="" disabled ${state.occ === '' ? 'selected' : ''}>-- Select Your Industry --</option>` +
+            filteredOCC.map(o => 
+                `<option value="${o.id}" ${state.occ === o.id ? 'selected' : ''}>${o.label}</option>`
+            ).join('');
+
+        selectElement.innerHTML = optionsHtml;
+    }
+
+
+    function render() {
+        const currencyObj = CURRENCIES.find(c => c.code === state.curr);
+        const sym = currencyObj ? currencyObj.sym : '$';
+        
+        // Filter occupations based on search query for initial render/state change
+        const filteredOCC = OCCUPATIONS.filter(o => 
+            o.label.toLowerCase().includes(state.searchQuery.toLowerCase())
+        );
+
+        // --- SETUP TAB ---
+        if (state.tab === 'setup') {
+            // Filter software based on selected occupation
+            const filteredSW = SOFTWARE.filter(s => s.for.includes('all') || s.for.includes(state.occ));
+            
+            appDiv.innerHTML = `
+                <div class="tabs">
+                    <button class="tab active">1. The Toolbox</button>
+                    <button class="tab" ${state.apps.length === 0 ? 'disabled style="opacity:0.5"' : 'onclick="setTab(\'dash\')"'} >2. The Blueprint</button>
+                </div>
+
+                <div class="card">
+                    <h3>Business Profile</h3>
+                    
+                    <!-- Occupation Search & Selection -->
+                    <div class="grid-3" style="margin-bottom: 20px;">
+                        <div style="grid-column: span 3 / span 3;">
+                            <label>Trade / Service Industry Selection</label>
+                            <p style="font-size:0.8rem; color:#6b7280; margin-top:5px;">
+                                Use the search bar below to find your specific occupation, then select it from the dropdown.
+                            </p>
+                        </div>
+                        
+                        <div>
+                            <label>Search Occupation</label>
+                            <!-- IMPORTANT: oninput now calls setSearchQueryOnly, which handles the DOM update directly -->
+                            <input type="text" id="searchInput" placeholder="e.g., Electrician, Lawyer, Restaurant" value="${state.searchQuery}" oninput="setSearchQueryOnly(this.value)">
+                        </div>
+                        
+                        <div style="grid-column: span 2 / span 2;">
+                            <label>Selected Occupation</label>
+                            <select id="occupationSelect" onchange="setOcc(this.value)">
+                                <option value="" disabled ${state.occ === '' ? 'selected' : ''}>-- Select Your Industry --</option>
+                                ${filteredOCC.map(o => `<option value="${o.id}" ${state.occ === o.id ? 'selected' : ''}>${o.label}</option>`).join('')}
+                            </select>
+                        </div>
+                    </div>
+                    
+                    <!-- Numerical Inputs (Live-updating) -->
+                    <div class="grid-3" style="gap: 15px;">
+                        <div>
+                            <label>${state.occ === 'restaurant' ? 'Reservations' : 'Jobs'} Per Week</label>
+                            <input type="number" min="1" max="5000" value="${state.jobs}" oninput="setJobs(this.value)">
+                        </div>
+                        
+                        <div>
+                             <label>Admin Hourly Cost (${sym})</label>
+                             <input type="number" value="${state.rate}" oninput="setRate(this.value)">
+                        </div>
+                        
+                        <div>
+                            <label>Currency</label>
+                            <select onchange="setCurr(this.value)">
+                                ${CURRENCIES.map(c => `<option value="${c.code}" ${state.curr === c.code ? 'selected' : ''}>${c.label}</option>`).join('')}
+                            </select>
+                        </div>
+                    </div>
+                    
+                </div>
+
+                <div class="card">
+                    <h3>Select Software</h3>
+                    <div class="sw-grid">
+                        ${filteredSW.map(s => `
+                            <button class="btn ${state.apps.includes(s.id) ? 'active' : ''}" onclick="toggleApp('${s.id}')">
+                                <div style="width:16px;height:16px;border:1px solid #ccc;border-radius:50%;margin-right:5px;background:${state.apps.includes(s.id) ? 'var(--primary)' : 'white'}"></div>
+                                ${s.name}
+                            </button>
+                        `).join('')}
+                    </div>
+                </div>
+
+                <button class="btn-primary btn" ${state.apps.length === 0 || state.occ === '' ? 'disabled' : ''} onclick="setTab('dash')">
+                    Generate Blueprint ➔
+                </button>
+            `;
+        } 
+        
+        // --- DASHBOARD TAB ---
+        else {
+            // Calc Logic
+            const results = RECIPES.filter(r => r.apps.some(a => state.apps.includes(a))).sort((a,b) => a.type === 'Bundle' ? -1 : 1);
+            const totalMins = results.reduce((acc, r) => acc + (r.mins * state.jobs), 0);
+            const savedHours = Math.round(totalMins / 60);
+            
+            // Raw value for calculation
+            const savedMoneyValue = Math.round(savedHours * 52 * state.rate); 
+            const savedMoney = savedMoneyValue.toLocaleString();
+
+            // PPP Fee Logic applied here
+            const pppData = getPppAdjustedFee(state.curr);
+            const feePercentage = pppData.percentage;
+            const feeText = pppData.text;
+
+            // Automation Fee Calculation (PPP-adjusted percentage of first-year savings)
+            const automationFeeValue = Math.round(savedMoneyValue * feePercentage);
+            const automationFee = automationFeeValue.toLocaleString();
+            
+            // Milestone Payment Calculations
+            const payment50 = Math.round(automationFeeValue * 0.50).toLocaleString();
+            const payment25 = Math.round(automationFeeValue * 0.25).toLocaleString();
+
+
+            appDiv.innerHTML = `
+                <div class="tabs">
+                    <button class="tab" onclick="setTab('setup')">1. The Toolbox</button>
+                    <button class="tab active">2. The Blueprint</button>
+                </div>
+
+                <div class="grid-3" style="margin-bottom:20px">
+                    <div class="stat-card" style="background: linear-gradient(135deg, var(--success), var(--stat-green))">
+                        <div>Time Saved</div>
+                        <div class="stat-num">${savedHours * 52}h</div>
+                        <small>Per Year</small>
+                    </div>
+                    <div class="stat-card" style="background: linear-gradient(135deg, var(--primary), var(--stat-blue))">
+                        <div>Money Saved</div>
+                        <div class="stat-num">${sym}${savedMoney}</div>
+                        <small>Per Year</small>
+                    </div>
+                    <div class="stat-card" style="background: white; border:1px solid var(--primary); color:var(--primary)">
+                        <div style="color:#666">Active Recipes</div>
+                        <div class="stat-num">${results.length}</div>
+                    </div>
+                </div>
+
+                <!-- PITCH COPY - POLISHED -->
+                <div class="card" style="background: var(--purple-light); border: 2px solid var(--purple); padding: 30px; text-align: center; margin-bottom: 25px;">
+                    <h3 style="font-size: 1.8rem; font-weight: bold; color: var(--primary-dark); margin-top: 0; margin-bottom: 15px;">
+                        The Real Payoff: Stop The <span style="color:var(--success);">${savedHours * 52} HOURS</span> Drain.
+                    </h3>
+                    <p style="font-size: 1.1rem; color: #4b5563; line-height: 1.5; margin-bottom: 20px;">
+                        This blueprint confirms you are unnecessarily losing valuable time. Automation not only saves you <b>${sym}${savedMoney}</b> annually, but more importantly, it <b>frees up ${savedHours * 52} hours per year</b> for you to choose how you want to live and work.
+                    </p>
+                </div>
+                <!-- END PITCH COPY -->
+                
+                <h2 style="margin-bottom:20px">1. Your Automation Plan</h2>
+                
+                <!-- EXPLANATION SECTION (Simplified & Cleaned) -->
+                <div class="card" style="margin-bottom: 30px; border-left: 5px solid var(--success);">
+                    <h3 style="margin-top:0; font-size:1.4rem; color:var(--success);">Understanding Your Plan (Plain Terms)</h3>
+                    <p style="color:#6b7280; margin-bottom: 15px;">
+                        The plan details the specific, <b>high-value processes</b> we will implement using your existing software. These automations directly deliver your calculated savings.
+                    </p>
+                    <div class="grid-2" style="gap: 10px;">
+                        <div style="padding: 10px; border: 1px dashed #ccc; border-radius: 8px;">
+                            <strong style="color:var(--purple);">A. Bundles (Full Workflows)</strong>
+                            <p style="margin-top:5px; font-size:0.9rem;">
+                                This is a <b>complete system</b> that handles major processes from start to finish without human touch. For example, a "Lead-to-Booked System" runs everything from form submission to lead creation in your CRM.
+                            </p>
+                        </div>
+                        <div style="padding: 10px; border: 1px dashed #ccc; border-radius: 8px;">
+                            <strong style="color:var(--primary);">B. Singles (Task Handlers)</strong>
+                            <p style="margin-top:5px; font-size:0.9rem;">
+                                This is a <b>simple rule</b> that performs one specific action when triggered. For example, the "Invoice Sync" automatically pushes closed jobs to your accounting software instantly.
+                            </p>
+                        </div>
+                    </div>
+                    
+                    <p style="margin-top:15px; font-size:0.9rem; font-weight:600; color:var(--text);">
+                        <b>Impact Ratings</b> tell us where to focus first: <span class="badge high">Priority</span> automations fix the biggest time waste and guarantee the fastest savings.
+                    </p>
+                </div>
+                <!-- END EXPLANATION SECTION -->
+
+                
+                ${results.length === 0 ? '<p style="text-align:center">No automations found. Try adding more tools.</p>' : ''}
+
+                ${results.map(r => `
+                    <div class="card recipe ${r.type === 'Bundle' ? 'bundle' : ''}" style="padding:15px">
+                        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px">
+                            <strong style="font-size:1.1rem; display:flex; align-items:center; gap:8px">
+                                ${r.type === 'Bundle' ? '<span style="background:#7c3aed; color:white; padding:2px 6px; border-radius:4px; font-size:0.7rem">BUNDLE</span>' : ''}
+                                ${r.title}
+                            </strong>
+                            <!-- Updated logic: 'Priority' gets the 'high' (red) style -->
+                            <span class="badge ${r.imp === 'Priority' ? 'high' : ''}">${r.imp} Impact</span>
+                        </div>
+                        <p style="margin-top:0; color:#666; font-size:0.9rem">${r.desc}</p>
+                        
+                        ${r.type === 'Bundle' 
+                            ? `<div style="background:white; padding:10px; border-radius:8px; border:1px solid #eee">
+                                ${r.steps.map((s, i) => `<div class="step"><div class="step-num">${i+1}</div> ${s}</div>`).join('')}
+                               </div>`
+                            : `<div style="background:#f9fafb; padding:8px; border-radius:8px; font-size:0.85rem">
+                                <strong>IF</strong> ${r.trigger} ➔ <strong>THEN</strong> ${r.action}
+                               </div>`
+                        }
+                    </div>
+                `).join('')}
+
+                <!-- Milestone & Payment Plan -->
+                <div class="card" style="margin-top: 30px; border-top: 4px solid var(--purple);">
+                    <h2 style="margin-bottom:15px; color:var(--purple);">2. Project & Payment Plan</h2>
+                    <p style="font-weight:600; margin-bottom:10px;">
+                        This project uses a value-based, milestone-driven model to minimize your risk. Payment is tied directly to the achievement of defined project deliverables.
+                    </p>
+                    
+                    <div style="font-size:0.9rem; color:#4b5563; margin-bottom: 15px; text-align:center;">
+                        [attachment_0](attachment)
+                    </div>
+
+                    <table style="width:100%; border-collapse: collapse; margin-top: 15px; font-size: 0.9rem;">
+                        <thead style="background:var(--purple-light);">
+                            <tr>
+                                <th style="padding: 10px; border-bottom: 2px solid var(--purple); text-align: left;">Milestone</th>
+                                <th style="padding: 10px; border-bottom: 2px solid var(--purple); text-align: left;">Deliverable Goal</th>
+                                <th style="padding: 10px; border-bottom: 2px solid var(--purple); text-align: right;">Payment Due</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr style="border-bottom: 1px solid #eee;">
+                                <td style="padding: 10px; font-weight: bold;">0. Kick-Off</td>
+                                <td style="padding: 10px;">Project Initialization and Resource Allocation.</td>
+                                <td style="padding: 10px; text-align: right; color:var(--purple); font-weight: bold;">50% (${sym}${payment50}) - Upfront</td>
+                            </tr>
+                            <tr style="border-bottom: 1px solid #eee;">
+                                <td style="padding: 10px; font-weight: bold;">1. Foundation Delivery</td>
+                                <td style="padding: 10px;">Deployment of highest-impact automations (e.g., Lead-to-Booked System).</td>
+                                <td style="padding: 10px; text-align: right; color:var(--primary); font-weight: bold;">25% (${sym}${payment25}) - After Delivery</td>
+                            </tr>
+                            <tr style="border-bottom: 1px solid #eee;">
+                                <td style="padding: 10px; font-weight: bold;">2. Financial Delivery</td>
+                                <td style="padding: 10px;">Deployment of Invoice Sync and all remaining core financial automations.</td>
+                                <td style="padding: 10px; text-align: right; color:var(--primary); font-weight: bold;">25% (${sym}${payment25}) - After Delivery</td>
+                            </tr>
+                            <tr>
+                                <td style="padding: 10px; font-weight: bold;">3. Guarantee Phase</td>
+                                <td style="padding: 10px;">30-Day Performance Monitoring and full team Handover/Training.</td>
+                                <td style="padding: 10px; text-align: right; font-weight: bold; color:var(--success);">0% (Payments Complete)</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- Dynamic CTA Card - AIDA REWRITE (Now a Red Banner) -->
+                <div class="card cta-card" style="margin-top: 30px; border-color: #ef4444; background: #fef2f2;">
+                    <h3 style="margin-top:0; font-size:1.4rem; color: #b91c1c;">Ready to Reclaim ${savedHours * 52} Hours and Stop Losing ${sym}${savedMoney} Annually?</h3>
+                    
+                    <!-- AIDA COPY WITH PARAGRAPHS - NOW <100 WORDS -->
+                    <p>
+                        <!-- A: Attention / I: Interest -->
+                        <b style="color: #dc2626;">Stop</b> losing time on daily, boring tasks. This blueprint confirms your team currently wastes <b style="color: #dc2626;">${savedHours * 52} hours</b> and <b style="color: #dc2626;">${sym}${savedMoney}</b> every year.
+                    </p>
+                    <p>
+                        <!-- D: Desire / A: Action -->
+                        <b style="color: #dc2626;">Reclaim</b> this massive time to <b style="color: #dc2626;">Focus</b> on revenue or leisure. <b style="color: #dc2626;">Implement</b> this automation stack for a one-time fee, which is only ${Math.round(feePercentage * 100)}% of your immediate first-year <b style="color: #dc2626;">savings</b>.
+                    </p>
+                    <!-- END AIDA COPY -->
+
+                    <div class="cta-highlight" style="color: #dc2626;">
+                        Your One-Time Investment: ${sym}${automationFee}
+                    </div>
+
+                    <a href="mailto:youremail@example.com?subject=Automation%20Quote%20for%20${savedMoney}%20Annually" 
+                       class="btn-primary btn" 
+                       style="text-decoration:none; background: #dc2626; border-color: #dc2626; box-shadow: 0 4px 10px rgba(220, 38, 38, 0.4);">
+                        Start Saving Now!
+                    </a>
+                    <p style="font-size:0.8rem; color:#666; text-align:center; margin-top:10px;">
+                        The fee is less than 2 months of your calculated savings! Let's guarantee your <b style="color: #dc2626;">savings</b>.
+                    </p>
+                </div>
+            `;
+        }
+    }
+
+    // --- 4. HELPERS ---
+    window.setTab = (t) => { 
+        state.tab = t; 
+        render(); 
+        // Scroll to the top if moving to the dashboard tab
+        if (t === 'dash') {
+            window.scrollTo(0, 0);
+        }
+    };
+    
+    window.setOcc = (v) => { state.occ = v; state.apps = []; render(); }; // Reset apps on trade change
+    
+    // Helper to filter and update the dropdown options without calling render()
+    window.setSearchQueryOnly = (v) => { 
+        state.searchQuery = v; 
+        updateOccupationSelect();
+    };
+
+    // Reverting to previous state where inputs update immediately
+    window.setJobs = (v) => { 
+        const jobsValue = parseInt(v);
+        if (!isNaN(jobsValue) && jobsValue >= 1) {
+            state.jobs = jobsValue;
+        } else {
+            state.jobs = 0; // Use 0 or previous valid value for safety
+        }
+        render(); 
+    }; 
+    
+    window.setRate = (v) => { 
+        const rateValue = parseFloat(v);
+        if (!isNaN(rateValue) && rateValue >= 0) {
+            state.rate = rateValue; 
+        } else {
+            state.rate = 0; // Use 0 or previous valid value for safety
+        }
+        render(); 
+    }; 
+    
+    window.setCurr = (v) => { state.curr = v; render(); };
+
+    window.toggleApp = (id) => {
+        if(state.apps.includes(id)) state.apps = state.apps.filter(a => a !== id);
+        else state.apps.push(id);
+        render();
+    };
+    
+    // --- 5. INIT ---
+    render();
+
+    // Attach the initial update logic after the first render
+    document.addEventListener('DOMContentLoaded', updateOccupationSelect);
+
+</script>
+</body>
+</html>
+
